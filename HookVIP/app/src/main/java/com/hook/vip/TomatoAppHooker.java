@@ -5,26 +5,34 @@ import android.util.Log;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
 
+/**
+ * 针对 com.swhh.fasting.tomato 的 hook
+ */
 public class TomatoAppHooker {
 
-    private final ClassLoader classLoader;
+    /**
+     * 注册所有 hook
+     */
+    public static void hook() {
+        NewBaiduRealClassLoaderUtil.onReady(() -> {
+            ClassLoader cl = NewBaiduRealClassLoaderUtil.getRealClassLoader();
+            Log.d("kong", "TomatoAppHooker 开始 hook 方法");
 
-    public TomatoAppHooker(ClassLoader classLoader) {
-        this.classLoader = classLoader;
+            hookMethod(cl,
+                    "com.swhh.fasting.tomato.mvvm.model.LoginResponse$UserRichBean",
+                    "getViptype", "4");
+            hookMethod(cl,
+                    "com.swhh.fasting.tomato.mvvm.model.LoginResponse$UserRichBean",
+                    "getIsvalidvip", "1");
+        });
     }
 
-    /** 入口方法，注册所有 hook */
-    public void hookAll() {
-        hookMethod("com.swhh.fasting.tomato.mvvm.model.LoginResponse$UserRichBean",
-                "getViptype", "4");
-        hookMethod("com.swhh.fasting.tomato.mvvm.model.LoginResponse$UserRichBean",
-                "getIsvalidvip", "1");
-    }
-
-    /** 通用 hook 方法 */
-    private void hookMethod(String className, String methodName, final String forceResult) {
+    /**
+     * 通用 hook 方法
+     */
+    private static void hookMethod(ClassLoader cl, String className, String methodName, final String forceResult) {
         try {
-            XposedHelpers.findAndHookMethod(className, classLoader, methodName, new XC_MethodHook() {
+            XposedHelpers.findAndHookMethod(className, cl, methodName, new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                     Log.d("kong", "[HOOK] 即将调用 " + methodName + "()");
