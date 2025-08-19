@@ -2,6 +2,7 @@ package com.hook.vip;
 
 import android.app.Application;
 import android.content.Context;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,7 @@ public class NewBaiduRealClassLoaderUtil {
                 Application realApp = (Application) stubAppClass.getField("mRealApplication").get(null);
                 if (realApp != null) {
                     realClassLoader = realApp.getClassLoader();
-                    XposedBridge.log("✅ 获取真实ClassLoader成功: " + realClassLoader);
+                    Log.d("kong","✅ 获取真实ClassLoader成功: " + realClassLoader);
 
                     // 执行所有回调
                     for (Runnable r : readyCallbacks) r.run();
