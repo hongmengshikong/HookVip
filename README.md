@@ -1,6 +1,6 @@
-# LSPosed Hook 模块
+# XPosed Hook 模块
 
-本项目是一个基于 LSPosed 的 Android 应用 Hook 工具，用于修改指定 App 内部方法返回值，实现特定功能。
+本项目是一个基于 XPosed 的 Android 应用 Hook 工具，用于修改指定 App 内部方法返回值，实现特定功能。
 
 ---
 
@@ -10,24 +10,7 @@
 |----------|------|----------|
 | 体重日记 | com.kproduce.weight | 理论全版本通杀（测试到 3.0.9） |
 | 番茄轻断食 | com.swhh.fasting.tomato | 理论全版本通杀（测试到 3.4.7） |
-
----
-
-## 功能说明
-
-### 体重日记（com.kproduce.weight）
-
-- Hook 用户设置类 UserSettingsKV，强制用户为永久 VIP。
-- Hook 写入方法 UserSettingsKV.n(int)，阻止修改 VIP 权限。
-- 使用 DexKit 扫描方法，通过字段名匹配 Hook 成功率高。
-- 支持直接修改返回值，保证 VIP 永久生效。
-
-### 番茄轻断食（com.swhh.fasting.tomato）
-
-- 自动获取目标应用的真实 `ClassLoader`，解决加固/StubApplication问题。
-- 支持延迟 hook，确保在 `attachBaseContext` 执行后才注册 hook。
-- 独立封装 AppHooker，每个 App 的 hook 逻辑可单独维护。
-- 日志清晰，可查看原始返回值和修改后的返回值。
+| 番茄闪轻 | com.qyxy.tomato.android | 理论全版本通杀（测试到 2.1.7） |
 
 ---
 
