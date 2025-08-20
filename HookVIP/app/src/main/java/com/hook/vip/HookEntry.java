@@ -23,15 +23,18 @@ public class HookEntry implements IXposedHookLoadPackage {
             Log.d("kong", "加载目标包：" + loadPackageParam.packageName);
 
             try {
-                // 获取 StubApplication 并初始化工具
-                Class<?> stubAppClass = loadPackageParam.classLoader.loadClass("com.sagittarius.v6.StubApplication");
-                NewBaiduRealClassLoaderUtil.init(stubAppClass);
+                // 初始化通用工具类
+                UniversalRealClassLoaderUtil.init();
 
-                // 调用 AppHooker 注册 hook（自动延迟执行）
-                TomatoAppHooker.hook();
+                // 注册回调：等真实 ClassLoader 就绪后再调用 TomatoAppHooker
+                UniversalRealClassLoaderUtil.onReady(() -> {
+                    ClassLoader cl = UniversalRealClassLoaderUtil.getRealClassLoader();
+                    Log.d("kong", "准备调用 TomatoAppHooker.hook，传入真实 ClassLoader");
+                    TomatoAppHooker.hook(cl);
+                });
 
             } catch (Throwable t) {
-                Log.d("kong", "获取 StubApplication 失败: " + t);
+                Log.d("kong", "初始化 UniversalRealClassLoaderUtil 失败: " + t);
             }
         }
 
