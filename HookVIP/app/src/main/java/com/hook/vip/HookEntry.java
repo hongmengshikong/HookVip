@@ -1,8 +1,17 @@
 package com.hook.vip;
 
+import android.content.Context;
 import android.util.Log;
 
+import com.hook.vip.app.TomatoAppHooker;
+import com.hook.vip.app.TomatoFlashlightAppHooker;
+import com.hook.vip.app.WeightAppHooker;
+import com.hook.vip.util.UniversalRealClassLoaderUtil;
+
 import de.robv.android.xposed.IXposedHookLoadPackage;
+import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class HookEntry implements IXposedHookLoadPackage {
@@ -16,7 +25,7 @@ public class HookEntry implements IXposedHookLoadPackage {
                 // 调用 AppHooker 执行 DexKit 方法查找 + Hook
                 new WeightAppHooker(loadPackageParam);
             } catch (Throwable t) {
-                Log.e("kong", "AppHooker 初始化失败", t);
+                Log.e("kong", "WeightAppHooker 初始化失败:" + t);
             }
         }
         if ("com.swhh.fasting.tomato".equals(loadPackageParam.packageName)) {

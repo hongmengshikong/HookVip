@@ -1,4 +1,4 @@
-package com.hook.vip;
+package com.hook.vip.util;
 
 import android.app.Application;
 import android.content.Context;

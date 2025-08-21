@@ -1,4 +1,4 @@
-package com.hook.vip;
+package com.hook.vip.app;
 
 import android.util.Log;
 

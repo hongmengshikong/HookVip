@@ -1,4 +1,4 @@
-package com.hook.vip;
+package com.hook.vip.util;
 
 import android.app.Application;
 import android.content.Context;
@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 /**
