@@ -1,6 +1,5 @@
 package com.hook.vip;
 
-import android.content.Context;
 import android.util.Log;
 
 import com.hook.vip.app.TomatoAppHooker;
@@ -9,9 +8,6 @@ import com.hook.vip.app.WeightAppHooker;
 import com.hook.vip.util.UniversalRealClassLoaderUtil;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class HookEntry implements IXposedHookLoadPackage {

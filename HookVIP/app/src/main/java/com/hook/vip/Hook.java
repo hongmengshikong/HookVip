@@ -1,7 +1,5 @@
 package com.hook.vip;
 
-import android.app.Application;
-import android.content.Context;
 import android.util.Log;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
