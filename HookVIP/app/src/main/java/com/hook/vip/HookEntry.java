@@ -2,7 +2,7 @@ package com.hook.vip;
 
 import android.util.Log;
 
-import com.hook.vip.app.LRJKApoHooker;
+import com.hook.vip.app.LRJKAppHooker;
 import com.hook.vip.app.TomatoAppHooker;
 import com.hook.vip.app.TomatoFlashlightAppHooker;
 import com.hook.vip.app.WeightAppHooker;
@@ -69,8 +69,8 @@ public class HookEntry implements IXposedHookLoadPackage {
 //                // 注册回调：等真实 ClassLoader 就绪后再调用 TomatoAppHooker
                 UniversalRealClassLoaderUtil.onReady(() -> {
                     ClassLoader cl = UniversalRealClassLoaderUtil.getRealClassLoader();
-                    Log.d("kong", "准备调用 ToolBoxAppHooker.hook，传入真实 ClassLoader");
-                    LRJKApoHooker.hook(cl);
+                    Log.d("kong", "准备调用 LRJKAppHooker.hook，传入真实 ClassLoader");
+                    LRJKAppHooker.hook(cl);
                 });
             } catch (Throwable t) {
                 Log.e("kong", "初始化 UniversalRealClassLoaderUtil 失败: " + t);

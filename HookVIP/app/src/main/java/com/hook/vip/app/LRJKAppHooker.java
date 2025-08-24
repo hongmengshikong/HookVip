@@ -6,7 +6,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedHelpers;
 
-public class LRJKApoHooker {
+public class LRJKAppHooker {
     public static void hook(ClassLoader cl) {
         hookSplashAds(cl);
 
