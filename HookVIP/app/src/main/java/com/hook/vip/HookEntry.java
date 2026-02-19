@@ -6,6 +6,7 @@ import com.hook.vip.app.LRJKAppHooker;
 import com.hook.vip.app.TomatoAppHooker;
 import com.hook.vip.app.TomatoFlashlightAppHooker;
 import com.hook.vip.app.WeightAppHooker;
+import com.hook.vip.app.YiNianAppHooker;
 import com.hook.vip.util.UniversalRealClassLoaderUtil;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -61,6 +62,7 @@ public class HookEntry implements IXposedHookLoadPackage {
         }
 
 
+        //懒人驾考
         if ("com.jx885.lrjk".equals(loadPackageParam.packageName)) {
             Log.d("kong", "加载目标包：" + loadPackageParam.packageName);
             try {
@@ -74,6 +76,16 @@ public class HookEntry implements IXposedHookLoadPackage {
                 });
             } catch (Throwable t) {
                 Log.e("kong", "初始化 UniversalRealClassLoaderUtil 失败: " + t);
+            }
+        }
+
+        //一念
+        if ("com.mt.copyidea".equals(loadPackageParam.packageName)) {
+            Log.d("kong", "加载目标包：" + loadPackageParam.packageName);
+            try {
+                new YiNianAppHooker(loadPackageParam);
+            } catch (Throwable t) {
+                Log.e("kong", "初始化 YiNianAppHooker 失败: " + t);
             }
         }
     }
