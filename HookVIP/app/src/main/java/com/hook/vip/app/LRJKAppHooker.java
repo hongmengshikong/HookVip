@@ -8,10 +8,10 @@ import de.robv.android.xposed.XposedHelpers;
 
 public class LRJKAppHooker {
     public static void hook(ClassLoader cl) {
-        hookSplashAds(cl);
+//        hookSplashAds(cl);
 
         //免登陆
-        XposedHelpers.findAndHookMethod("a8.e", cl, "k0", new XC_MethodHook() {
+        XposedHelpers.findAndHookMethod("a8.e", cl, "p0", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 super.afterHookedMethod(param);
@@ -21,7 +21,7 @@ public class LRJKAppHooker {
         //永久会员
         XposedHelpers.findAndHookMethod("a8.e",
                 cl,
-                "p0",
+                "u0",
                 int.class,
                 new XC_MethodHook() {
             @Override
