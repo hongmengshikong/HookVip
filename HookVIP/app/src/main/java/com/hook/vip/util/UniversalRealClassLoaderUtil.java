@@ -18,6 +18,7 @@ import de.robv.android.xposed.XposedHelpers;
 public class UniversalRealClassLoaderUtil {
 
     private static ClassLoader realClassLoader = null;
+    private static boolean hasInstalledAttachHook = false;
     private static final List<Runnable> readyCallbacks = new ArrayList<>();
 
     /**
@@ -25,18 +26,46 @@ public class UniversalRealClassLoaderUtil {
      * 必须在 handleLoadPackage 里调用一次
      */
     public static void init() {
-        if (realClassLoader != null) {
-            Log.d("kong", "⚠️ 已经初始化过，无需重复 hook");
+        if (hasInstalledAttachHook) {
+            if (realClassLoader != null) {
+                Log.d("kong", "⚠️ 已经初始化过，无需重复 hook");
+            } else {
+                Log.d("kong", "⚠️ 已注册 Application.attach hook，继续等待真实 ClassLoader");
+            }
             return;
         }
+
+        hasInstalledAttachHook = true;
 
         XposedHelpers.findAndHookMethod(Application.class, "attach", Context.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Context context = (Context) param.args[0];
-                realClassLoader = context.getClassLoader();
+                ClassLoader candidateClassLoader = context.getClassLoader();
 
-                Log.d("kong", "✅ 获取真实ClassLoader成功: " + realClassLoader);
+                // 某些壳或启动链路会多次触发 Application.attach，这里只消费第一次拿到的有效 ClassLoader
+                if (realClassLoader != null) {
+                    if (realClassLoader == candidateClassLoader) {
+                        Log.d("kong", "ℹ️ ClassLoader 已就绪，忽略重复 attach: " + candidateClassLoader);
+                    } else {
+                        Log.d(
+                                "kong",
+                                "ℹ️ ClassLoader 已就绪，忽略新的 attach: "
+                                        + candidateClassLoader
+                                        + " @" + System.identityHashCode(candidateClassLoader)
+                        );
+                    }
+                    return;
+                }
+
+                realClassLoader = candidateClassLoader;
+
+                Log.d(
+                        "kong",
+                        "✅ 获取真实ClassLoader成功: "
+                                + realClassLoader
+                                + " @" + System.identityHashCode(realClassLoader)
+                );
 
                 // 执行所有等待的回调
                 for (Runnable r : readyCallbacks) {

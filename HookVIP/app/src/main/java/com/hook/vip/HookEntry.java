@@ -26,6 +26,7 @@ public class HookEntry implements IXposedHookLoadPackage {
                 Log.e("kong", "WeightAppHooker 初始化失败:" + t);
             }
         }
+
         if ("com.swhh.fasting.tomato".equals(loadPackageParam.packageName)) {
             Log.d("kong", "加载目标包：" + loadPackageParam.packageName);
 
@@ -86,6 +87,22 @@ public class HookEntry implements IXposedHookLoadPackage {
                 new YiNianAppHooker(loadPackageParam);
             } catch (Throwable t) {
                 Log.e("kong", "初始化 YiNianAppHooker 失败: " + t);
+            }
+        }
+
+        //背书匠(360加固)
+        if("com.zzdbwku.zizbnea".equals(loadPackageParam.packageName)){
+            Log.d("kong", "加载目标包：" + loadPackageParam.packageName);
+            try {
+                // 初始化通用工具类
+                UniversalRealClassLoaderUtil.init();
+//                // 注册回调：等真实 ClassLoader 就绪后再调用 AppHooker
+                UniversalRealClassLoaderUtil.onReady(() -> {
+                    ClassLoader cl = UniversalRealClassLoaderUtil.getRealClassLoader();
+                    Log.d("kong", "准备调用 AppHooker.hook，传入真实 ClassLoader");
+                });
+            } catch (Throwable t) {
+                Log.e("kong", "初始化 UniversalRealClassLoaderUtil 失败: " + t);
             }
         }
     }
