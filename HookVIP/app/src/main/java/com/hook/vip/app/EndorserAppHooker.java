@@ -39,30 +39,30 @@ public class EndorserAppHooker {
         );
 
         // 2️⃣ 写入本地缓存 k0.a(key, value)
-        XposedHelpers.findAndHookMethod(
-                "b9.k0",
-                classLoader,
-                "a",
-                "java.lang.String",
-                "java.io.Serializable",
-                new XC_MethodHook() {
-
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-
-                        String key = (String) param.args[0];
-                        Object value = param.args[1];
-
-                        // ⭐ 只关心会员 key（减少噪声）
-                        if ("ur_ax_re_v_ic_ac".equals(key)) {
-                            Log.d(TAG, "[k0.a] 写入会员状态 -> key: " + key + " value: " + value);
-
-//                            Log.d(TAG, "[k0.a] 调用栈:\n" +
-//                                    Log.getStackTraceString(new Throwable()));
-                        }
-                    }
-                }
-        );
+//        XposedHelpers.findAndHookMethod(
+//                "b9.k0",
+//                classLoader,
+//                "a",
+//                "java.lang.String",
+//                "java.io.Serializable",
+//                new XC_MethodHook() {
+//
+//                    @Override
+//                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+//
+//                        String key = (String) param.args[0];
+//                        Object value = param.args[1];
+//
+//                        // ⭐ 只关心会员 key（减少噪声）
+//                        if ("ur_ax_re_v_ic_ac".equals(key)) {
+//                            Log.d(TAG, "[k0.a] 写入会员状态 -> key: " + key + " value: " + value);
+//
+////                            Log.d(TAG, "[k0.a] 调用栈:\n" +
+////                                    Log.getStackTraceString(new Throwable()));
+//                        }
+//                    }
+//                }
+//        );
     }
 
     // ================= 读取链 =================
@@ -94,40 +94,40 @@ public class EndorserAppHooker {
         );
 
         // 4️⃣ 底层读取 d1.b(key, default)
-        XposedHelpers.findAndHookMethod(
-                "b9.d1",
-                classLoader,
-                "b",
-                "java.lang.String",
-                boolean.class,
-                new XC_MethodHook() {
-
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-
-                        String key = (String) param.args[0];
-                        boolean def = (boolean) param.args[1];
-
-                        if ("ur_ax_re_v_ic_ac".equals(key)) {
-                            Log.d(TAG, "[d1.b] 读取会员状态 -> key: " + key + " default: " + def);
-                        }
-                    }
-
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-
-                        String key = (String) param.args[0];
-
-                        if ("ur_ax_re_v_ic_ac".equals(key)) {
-                            boolean result = (boolean) param.getResult();
-                            Log.d(TAG, "[d1.b] 返回值: " + result);
-
-//                            Log.d(TAG, "[d1.b] 调用栈:\n" +
-//                                    Log.getStackTraceString(new Throwable()));
-                        }
-                    }
-                }
-        );
+//        XposedHelpers.findAndHookMethod(
+//                "b9.d1",
+//                classLoader,
+//                "b",
+//                "java.lang.String",
+//                boolean.class,
+//                new XC_MethodHook() {
+//
+//                    @Override
+//                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+//
+//                        String key = (String) param.args[0];
+//                        boolean def = (boolean) param.args[1];
+//
+//                        if ("ur_ax_re_v_ic_ac".equals(key)) {
+//                            Log.d(TAG, "[d1.b] 读取会员状态 -> key: " + key + " default: " + def);
+//                        }
+//                    }
+//
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//
+//                        String key = (String) param.args[0];
+//
+//                        if ("ur_ax_re_v_ic_ac".equals(key)) {
+//                            boolean result = (boolean) param.getResult();
+//                            Log.d(TAG, "[d1.b] 返回值: " + result);
+//
+////                            Log.d(TAG, "[d1.b] 调用栈:\n" +
+////                                    Log.getStackTraceString(new Throwable()));
+//                        }
+//                    }
+//                }
+//        );
     }
     private static void UserBeanHook(ClassLoader classLoader) {
 
