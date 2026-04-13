@@ -8,6 +8,7 @@ import com.hook.vip.app.TomatoAppHooker;
 import com.hook.vip.app.TomatoFlashlightAppHooker;
 import com.hook.vip.app.WeightAppHooker;
 import com.hook.vip.app.YiNianAppHooker;
+import com.hook.vip.app.YimuListAppHooker;
 import com.hook.vip.util.UniversalRealClassLoaderUtil;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -107,5 +108,17 @@ public class HookEntry implements IXposedHookLoadPackage {
                 Log.e("kong", "初始化 UniversalRealClassLoaderUtil 失败: " + t);
             }
         }
+
+        //一木清单(无加固）
+        if ("com.wangc.todolist".equals(loadPackageParam.packageName)) {
+            Log.d("kong", "加载目标包：" + loadPackageParam.packageName);
+            try {
+                new YimuListAppHooker(loadPackageParam);
+            } catch (Throwable t) {
+                Log.e("kong", "初始化 YimuListAppHooker 失败: " + t);
+            }
+        }
+
+
     }
 }
