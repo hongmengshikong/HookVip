@@ -7,6 +7,7 @@ import com.hook.vip.app.LRJKAppHooker;
 import com.hook.vip.app.TomatoAppHooker;
 import com.hook.vip.app.TomatoFlashlightAppHooker;
 import com.hook.vip.app.WeightAppHooker;
+import com.hook.vip.app.YIYanAppHooker;
 import com.hook.vip.app.YiNianAppHooker;
 import com.hook.vip.app.YimuListAppHooker;
 import com.hook.vip.util.UniversalRealClassLoaderUtil;
@@ -118,6 +119,23 @@ public class HookEntry implements IXposedHookLoadPackage {
                 Log.e("kong", "初始化 YimuListAppHooker 失败: " + t);
             }
         }
+        //一言(360加固)
+        if("com.jhyan.yan".equals(loadPackageParam.packageName)){
+            Log.d("kong", "加载目标包：" + loadPackageParam.packageName);
+            try {
+                // 初始化通用工具类
+                UniversalRealClassLoaderUtil.init();
+//                // 注册回调：等真实 ClassLoader 就绪后再调用 AppHooker
+                UniversalRealClassLoaderUtil.onReady(() -> {
+                    ClassLoader cl = UniversalRealClassLoaderUtil.getRealClassLoader();
+                    Log.d("kong", "准备调用 AppHooker.hook，传入真实 ClassLoader");
+                    YIYanAppHooker.hook(cl);
+                });
+            } catch (Throwable t) {
+                Log.e("kong", "初始化 UniversalRealClassLoaderUtil 失败: " + t);
+            }
+        }
+
 
 
     }
