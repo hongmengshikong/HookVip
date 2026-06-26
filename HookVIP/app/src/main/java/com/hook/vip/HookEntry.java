@@ -8,6 +8,7 @@ import com.hook.vip.app.TomatoAppHooker;
 import com.hook.vip.app.TomatoFlashlightAppHooker;
 import com.hook.vip.app.WeightAppHooker;
 import com.hook.vip.app.YIYanAppHooker;
+import com.hook.vip.app.YiMuBillAppHooker;
 import com.hook.vip.app.YiNianAppHooker;
 import com.hook.vip.app.YimuListAppHooker;
 import com.hook.vip.util.UniversalRealClassLoaderUtil;
@@ -136,6 +137,22 @@ public class HookEntry implements IXposedHookLoadPackage {
             }
         }
 
+        //一木记账(360加固)
+        if("com.wangc.bill".equals(loadPackageParam.packageName)){
+            Log.d("kong", "加载目标包：" + loadPackageParam.packageName);
+            try {
+                // 初始化通用工具类
+                UniversalRealClassLoaderUtil.init();
+                // 注册回调：等真实 ClassLoader 就绪后再调用 AppHooker
+                UniversalRealClassLoaderUtil.onReady(() -> {
+                    ClassLoader cl = UniversalRealClassLoaderUtil.getRealClassLoader();
+                    Log.d("kong", "准备调用 YiMuBillAppHooker.hook，传入真实 ClassLoader");
+                    YiMuBillAppHooker.hook(cl);
+                });
+            } catch (Throwable t) {
+                Log.e("kong", "初始化 UniversalRealClassLoaderUtil 失败: " + t);
+            }
+        }
 
 
     }
