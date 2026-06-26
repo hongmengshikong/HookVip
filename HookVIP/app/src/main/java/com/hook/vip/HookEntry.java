@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.hook.vip.app.EndorserAppHooker;
 import com.hook.vip.app.LRJKAppHooker;
+import com.hook.vip.app.QDiaryAppHooker;
 import com.hook.vip.app.TomatoAppHooker;
 import com.hook.vip.app.TomatoFlashlightAppHooker;
 import com.hook.vip.app.WeightAppHooker;
@@ -151,6 +152,16 @@ public class HookEntry implements IXposedHookLoadPackage {
                 });
             } catch (Throwable t) {
                 Log.e("kong", "初始化 UniversalRealClassLoaderUtil 失败: " + t);
+            }
+        }
+
+        //Q日记
+        if ("com.slfteam.qdiary".equals(loadPackageParam.packageName)) {
+            Log.d("kong", "加载目标包：" + loadPackageParam.packageName);
+            try {
+                new QDiaryAppHooker(loadPackageParam);
+            } catch (Throwable t) {
+                Log.e("kong", "初始化 QDiaryAppHooker 失败: " + t);
             }
         }
 
