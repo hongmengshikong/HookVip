@@ -2,4 +2,10 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- 状态色（主色走 Material 3 默认基色 + Material You 动态取色） -->
+    <color name="state_ok">#1B873F</color>
+    <color name="state_warn">#B26A00</color>
+    <color name="state_error">#B3261E</color>
+    <color name="state_off_grey">#8A8F98</color>
 </resources>

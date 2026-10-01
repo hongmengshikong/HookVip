@@ -1,100 +1,60 @@
 package com.hook.vip.app;
 
+import com.hook.vip.util.ReflectUtil;
+import com.hook.vip.util.XposedUtil;
 
-import android.util.Log;
-
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import java.lang.reflect.Method;
 
 /**
  * 针对 com.mt.copyidea 的 hook
  */
 public class YiNianAppHooker {
-    public YiNianAppHooker(XC_LoadPackage.LoadPackageParam loadPackageParam) {
-        Api(loadPackageParam.classLoader);
-//        WXLoginToken(loadPackageParam.classLoader);
 
+    private static final String USER_DATA = "com.mt.copyidea.data.api.Api$UserRes$UserData";
+    private static final String WX_TOKEN = "com.mt.copyidea.data.bean.api.WXLoginToken$Data";
+
+    public YiNianAppHooker(ClassLoader classLoader) {
+        Api(classLoader);
+//        WXLoginToken(classLoader);
     }
-    private static void Api(ClassLoader cl){
-        XposedHelpers.findAndHookMethod(
-                "com.mt.copyidea.data.api.Api$UserRes$UserData",
-                cl,
-                "is_vip",
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
-                        super.beforeHookedMethod(param);
-                        Log.d("kong","[BEFORE] 即将调用 Api$is_vip");
-                        Log.d("kong", "[HOOK] 强制 is_vip = 1");
-                        param.setResult(1); // 直接返回 1
-                    }
-//                    @Override
-//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-//                        super.afterHookedMethod(param);
-//                        // 获取原始返回值
-//                        Object originalResult = param.getResult();
-////                        String original = originalResult != null ? (String) originalResult : "null";
-//
-//                        Log.d("kong", "[HOOK] Api$is_vip() 原始返回值: " + originalResult);
-//                        param.setResult(1);
-//                        Object modifiedResult = param.getResult();
-//                        Log.d("kong", "[HOOK] Api$is_vip() 修改返回值: " + modifiedResult);
-//                    }
-                });
-        XposedHelpers.findAndHookMethod(
-                "com.mt.copyidea.data.api.Api$UserRes$UserData",
-                cl,
-                "getVip_end_time",
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        super.beforeHookedMethod(param);
-                        Log.d("kong","[BEFORE] 即将调用 Api$getVip_end_time");
-                        param.setResult("2099-12-31 23:59:59");
-                    }
-//                    @Override
-//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-//                        super.afterHookedMethod(param);
-//                        // 获取原始返回值
-//                        Object originalResult = param.getResult();
-//                        Log.d("kong", "[HOOK] Api$getVip_end_time() 原始返回值: " + originalResult);
-//                        param.setResult("2099-12-31 23:59:59");
-//                        Object modifiedResult = param.getResult();
-//                        Log.d("kong", "[HOOK] Api$getVip_end_time() 修改返回值: " + modifiedResult);
-//                    }
-                });
+
+    private static void Api(ClassLoader cl) {
+        try {
+            Method isVip = ReflectUtil.findMethod(USER_DATA, cl, "is_vip");
+            XposedUtil.hookReturn(isVip, "yinian_is_vip", 1);
+            XposedUtil.d("[HOOK] 强制 is_vip = 1");
+        } catch (Throwable t) {
+            XposedUtil.e("❌ Hook " + USER_DATA + ".is_vip 失败", t);
+        }
+
+        try {
+            Method getVipEndTime = ReflectUtil.findMethod(USER_DATA, cl, "getVip_end_time");
+            XposedUtil.hookReturn(getVipEndTime, "yinian_vip_end_time", "2099-12-31 23:59:59");
+            XposedUtil.d("[HOOK] 强制 getVip_end_time = 2099-12-31 23:59:59");
+        } catch (Throwable t) {
+            XposedUtil.e("❌ Hook " + USER_DATA + ".getVip_end_time 失败", t);
+        }
     }
-    private static void WXLoginToken(ClassLoader cl){
-        XposedHelpers.findAndHookMethod(
-                "com.mt.copyidea.data.bean.api.WXLoginToken$Data",
-                cl,
-                "is_vip",
-                new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                super.beforeHookedMethod(param);
-                Log.d("kong","[BEFORE] 即将调用 WXLoginToken$is_vip");
-            }
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                super.afterHookedMethod(param);
-            }
-        });
-        XposedHelpers.findAndHookMethod(
-                "com.mt.copyidea.data.bean.api.WXLoginToken$Data",
-                cl,
-                "getVip_end",
-                new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                super.beforeHookedMethod(param);
-                Log.d("kong","[BEFORE] 即将调用 WXLoginToken$getVip_end");
-            }
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                super.afterHookedMethod(param);
-            }
-        });
+
+    private static void WXLoginToken(ClassLoader cl) {
+        try {
+            Method isVip = ReflectUtil.findMethod(WX_TOKEN, cl, "is_vip");
+            XposedUtil.hook(isVip, "yinian_wx_is_vip", chain -> {
+                XposedUtil.d("[HOOK] WXLoginToken$Data.is_vip");
+                return chain.proceed();
+            });
+        } catch (Throwable t) {
+            XposedUtil.e("❌ Hook " + WX_TOKEN + ".is_vip 失败", t);
+        }
+
+        try {
+            Method getVipEnd = ReflectUtil.findMethod(WX_TOKEN, cl, "getVip_end");
+            XposedUtil.hook(getVipEnd, "yinian_wx_vip_end", chain -> {
+                XposedUtil.d("[HOOK] WXLoginToken$Data.getVip_end");
+                return chain.proceed();
+            });
+        } catch (Throwable t) {
+            XposedUtil.e("❌ Hook " + WX_TOKEN + ".getVip_end 失败", t);
+        }
     }
 }

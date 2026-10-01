@@ -1,61 +1,45 @@
 package com.hook.vip.app;
 
-import android.util.Log;
+import com.hook.vip.util.ReflectUtil;
+import com.hook.vip.util.XposedUtil;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import java.lang.reflect.Method;
 
+/**
+ * Q日记（com.slfteam.qdiary）的 hook。
+ */
 public class QDiaryAppHooker {
-    public QDiaryAppHooker(XC_LoadPackage.LoadPackageParam loadPackageParam) {
-        hook(loadPackageParam.classLoader);
+
+    private static final String TAG = "kong";
+    private static final String USER_ACC = "com.slfteam.slib.account.SUsrAcc";
+
+    public QDiaryAppHooker(ClassLoader classLoader) {
+        hook(classLoader);
     }
 
-    private static void hook(ClassLoader classLoader){
-        XposedHelpers.findAndHookMethod(
-                "com.slfteam.slib.account.SUsrAcc",
-                classLoader,
-                "isVip",
-                new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                super.beforeHookedMethod(param);
-                boolean result= (boolean) param.getResult();
-                Log.d("kong", "hook前"+result);
-            }
-            @Override
-            protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
-                super.afterHookedMethod(param);
-                boolean result= (boolean) param.getResult();
-                Log.d("kong", "hook前"+result);
-                param.setResult(true);
-                boolean result2= (boolean) param.getResult();
-                Log.d("kong", "hook后"+result2);
-            }
-        });
-        XposedHelpers.findAndHookMethod(
-                "com.slfteam.slib.account.SUsrAcc",
-                classLoader,
-                "vipExpired",
-                new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                super.beforeHookedMethod(param);
-                boolean result= (boolean) param.getResult();
-                Log.d("kong", "hook前"+result);
-            }
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                super.afterHookedMethod(param);
-                boolean result= (boolean) param.getResult();
-                Log.d("kong", "hook前"+result);
-                param.setResult(false);
-                boolean result2= (boolean) param.getResult();
-                Log.d("kong", "hook后"+result2);
-            }
-        });
+    private static void hook(ClassLoader classLoader) {
+        try {
+            Method isVip = ReflectUtil.findMethod(USER_ACC, classLoader, "isVip");
+            XposedUtil.hook(isVip, "qdiary_is_vip", chain -> {
+                Object original = chain.proceed();
+                XposedUtil.d("hook前" + original);
+                XposedUtil.d("hook后true");
+                return Boolean.TRUE;
+            });
+        } catch (Throwable t) {
+            XposedUtil.e("❌ Hook SUsrAcc.isVip 失败", t);
+        }
 
-
+        try {
+            Method vipExpired = ReflectUtil.findMethod(USER_ACC, classLoader, "vipExpired");
+            XposedUtil.hook(vipExpired, "qdiary_vip_expired", chain -> {
+                Object original = chain.proceed();
+                XposedUtil.d("hook前" + original);
+                XposedUtil.d("hook后false");
+                return Boolean.FALSE;
+            });
+        } catch (Throwable t) {
+            XposedUtil.e("❌ Hook SUsrAcc.vipExpired 失败", t);
+        }
     }
-
 }

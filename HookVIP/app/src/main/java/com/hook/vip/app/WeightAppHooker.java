@@ -1,6 +1,6 @@
 package com.hook.vip.app;
 
-import android.util.Log;
+import com.hook.vip.util.XposedUtil;
 
 import org.luckypray.dexkit.DexKitBridge;
 import org.luckypray.dexkit.query.FindMethod;
@@ -12,11 +12,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
-
+/**
+ * 体重日记（com.kproduce.weight）的 hook。
+ *
+ * 方法定位仍然依赖 DexKit；注册 hook 的部分已迁移到 libxposed API 102。
+ */
 public class WeightAppHooker {
 
     static {
@@ -25,15 +25,14 @@ public class WeightAppHooker {
 
     private final ClassLoader hostClassLoader;
 
-    public WeightAppHooker(XC_LoadPackage.LoadPackageParam loadPackageParam) {
-        this.hostClassLoader = loadPackageParam.classLoader;
-        String apkPath = loadPackageParam.appInfo.sourceDir;
+    public WeightAppHooker(ClassLoader hostClassLoader, String apkPath) {
+        this.hostClassLoader = hostClassLoader;
 
         try (DexKitBridge bridge = DexKitBridge.create(apkPath)) {
             hookUserSettingsKV_e(bridge);
             hookUserSettingsKV_n(bridge);
         } catch (Throwable t) {
-            Log.e("kong", "DexKit 初始化失败", t);
+            XposedUtil.e("DexKit 初始化失败", t);
         }
     }
 
@@ -50,10 +49,11 @@ public class WeightAppHooker {
             ).single();
 
             Method method = methodData.getMethodInstance(hostClassLoader);
-            XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(1)); // VIP 永久生效
-            Log.d("kong", "Hook UserSettingsKV.e() 成功");
-        } catch (Exception e) {
-            Log.e("kong", "没有找到 UserSettingsKV.e() 方法", e);
+            // VIP 永久生效（等价于旧的 XC_MethodReplacement.returnConstant(1)）
+            XposedUtil.hookReturn(method, "weight_user_settings_e", 1);
+            XposedUtil.d("Hook UserSettingsKV.e() 成功");
+        } catch (Throwable e) {
+            XposedUtil.e("没有找到 UserSettingsKV.e() 方法", e);
         }
     }
 
@@ -70,16 +70,14 @@ public class WeightAppHooker {
             ).single();
 
             Method method = methodData.getMethodInstance(hostClassLoader);
-            XposedBridge.hookMethod(method, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) {
-                    param.setResult(null); // 阻止写入
-                    Log.d("kong", "阻止 UserSettingsKV.n(int) 写入 user_role");
-                }
+            XposedUtil.hook(method, "weight_user_settings_n", chain -> {
+                // 阻止写入：直接丢弃这次调用
+                XposedUtil.d("阻止 UserSettingsKV.n(int) 写入 user_role");
+                return null;
             });
-            Log.d("kong", "Hook UserSettingsKV.n(int) 成功");
-        } catch (Exception e) {
-            Log.e("kong", "没有找到 UserSettingsKV.n(int) 方法", e);
+            XposedUtil.d("Hook UserSettingsKV.n(int) 成功");
+        } catch (Throwable e) {
+            XposedUtil.e("没有找到 UserSettingsKV.n(int) 方法", e);
         }
     }
 }

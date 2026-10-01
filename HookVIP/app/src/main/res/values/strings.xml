@@ -1,3 +1,69 @@
 <resources>
     <string name="app_name">HookVIP</string>
+    <string name="module_description">为体重日记、番茄轻断食、一念、背书匠等应用解锁 VIP 的 Xposed 模块</string>
+
+    <!-- 底部导航 -->
+    <string name="tab_apps">应用</string>
+    <string name="tab_module">模块</string>
+    <string name="tab_settings">设置</string>
+
+    <!-- 应用页 -->
+    <string name="apps_search_hint">搜索应用名称或包名</string>
+    <string name="apps_count_summary">共 %1$d 个应用，已勾选 %2$d 个</string>
+    <string name="apps_enable_all">全部勾选</string>
+    <string name="apps_disable_all">全部取消</string>
+    <string name="apps_hint_active">开关 = LSPosed 作用域：勾选后模块才会加载进该应用，重启该应用生效</string>
+    <string name="apps_hint_inactive">模块未激活：请先到 LSPosed 里启用 HookVIP，这里才能勾选</string>
+    <string name="apps_empty">没有匹配的应用</string>
+    <string name="apps_enabled_switch">是否让模块作用于该应用</string>
+    <string name="apps_need_module">模块未激活，请先到 LSPosed 中启用 HookVIP</string>
+    <string name="apps_scope_added">已把 %1$d 个应用加入作用域</string>
+    <string name="apps_scope_removed">已把 %1$d 个应用移出作用域</string>
+    <string name="apps_scope_request_failed">请求作用域失败：%1$s</string>
+    <string name="apps_scope_failed">操作失败，请到 LSPosed 里手动勾选</string>
+    <string name="app_installed">已安装</string>
+    <string name="app_not_installed">未安装</string>
+    <string name="app_version">版本 %1$s</string>
+    <string name="app_tested">适配 %1$s</string>
+    <string name="app_launch_failed">无法启动 %1$s</string>
+
+    <!-- 模块页 -->
+    <string name="module_state_active">模块已激活</string>
+    <string name="module_state_inactive">模块未激活</string>
+    <string name="module_state_inactive_summary">请在 LSPosed 中启用 HookVIP 模块，然后重启本应用。启用后到「应用」页勾选需要解锁的应用。</string>
+    <string name="module_state_scope_empty">模块已激活，但还没有勾选任何应用</string>
+    <string name="module_state_scope_empty_summary">到「应用」页勾选需要解锁的应用（= 加入 LSPosed 作用域），勾选后重启目标应用即可生效。</string>
+    <string name="module_state_ready_summary">框架运行正常。下面「应用」页里勾选的应用，重启后就会安装 Hook。</string>
+    <string name="module_status_checking">正在检测模块状态…</string>
+    <string name="module_refresh">刷新</string>
+    <string name="stat_checked">已勾选</string>
+    <string name="stat_installed">已安装</string>
+    <string name="info_title">环境信息</string>
+    <string name="info_framework">框架：%1$s</string>
+    <string name="info_api">libxposed API：%1$s</string>
+    <string name="info_scope">作用域：%1$d 个应用</string>
+    <string name="info_running">正在 Hook 的进程：%1$s</string>
+    <string name="info_module">模块版本：%1$s</string>
+    <string name="info_unknown">未知</string>
+    <string name="guide_title">使用步骤</string>
+    <string name="guide_step1_title">1. 启用模块</string>
+    <string name="guide_step1">在 LSPosed 里启用 HookVIP。作用域由你自己控制，模块不会强制勾选任何应用。</string>
+    <string name="guide_step2_title">2. 勾选应用</string>
+    <string name="guide_step2">到「应用」页勾选需要解锁的应用 —— 这个开关就是 LSPosed 的作用域，在 LSPosed 管理页面里勾过的应用这里也会自动打开。</string>
+    <string name="guide_step3_title">3. 重启目标应用</string>
+    <string name="guide_step3">勾选改动后重启目标应用生效；日志可用 logcat 按 tag「kong」过滤，也可以在 LSPosed 日志里查看。</string>
+
+    <!-- 设置页 -->
+    <string name="settings_appearance">外观</string>
+    <string name="settings_dark_mode">深色模式</string>
+    <string name="settings_monet">动态取色（Material You）</string>
+    <string name="settings_monet_desc">Android 12+ 上跟随壁纸配色</string>
+    <string name="settings_about">关于</string>
+    <string name="settings_version">版本</string>
+    <string name="settings_framework">框架</string>
+
+    <!-- 深色模式选项 -->
+    <string name="dark_mode_system">跟随系统</string>
+    <string name="dark_mode_on">始终开启</string>
+    <string name="dark_mode_off">始终关闭</string>
 </resources>

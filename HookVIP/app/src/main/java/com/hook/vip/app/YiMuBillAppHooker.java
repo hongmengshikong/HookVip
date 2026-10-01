@@ -1,11 +1,10 @@
 package com.hook.vip.app;
 
-import android.util.Log;
+import com.hook.vip.util.ReflectUtil;
+import com.hook.vip.util.XposedUtil;
 
 import java.lang.reflect.Field;
-
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
+import java.lang.reflect.Method;
 
 /**
  * 一木记账 (com.wangc.bill) Hook 实现
@@ -30,8 +29,11 @@ public class YiMuBillAppHooker {
     /** 2099-12-31 23:59:59 的时间戳，用于伪装VIP过期时间 */
     private static final long VIP_EXPIRE_FOREVER = 4102444800000L;
 
+    private static final String USER_CLASS = "com.wangc.bill.http.entity.User";
+    private static final String USER_DB_CLASS = "com.wangc.bill.database.entity.UserDB";
+
     public static void hook(ClassLoader classLoader) {
-        Log.d(TAG, "一木记账 Hook 开始...");
+        XposedUtil.d("一木记账 Hook 开始...");
         hookUserGetter(classLoader);
         hookUserSetter(classLoader);
         hookMyApplication_e(classLoader);
@@ -44,33 +46,16 @@ public class YiMuBillAppHooker {
 
     private static void hookUserGetter(ClassLoader classLoader) {
         try {
-            Class<?> userClass = XposedHelpers.findClass(
-                    "com.wangc.bill.http.entity.User", classLoader);
+            XposedUtil.hookReturn(ReflectUtil.findMethod(USER_CLASS, classLoader, "isVip"),
+                    "yimubill_user_is_vip", true);
+            XposedUtil.hookReturn(ReflectUtil.findMethod(USER_CLASS, classLoader, "getVipType"),
+                    "yimubill_user_get_vip_type", 2);
+            XposedUtil.hookReturn(ReflectUtil.findMethod(USER_CLASS, classLoader, "getVipTime"),
+                    "yimubill_user_get_vip_time", VIP_EXPIRE_FOREVER);
 
-            XposedHelpers.findAndHookMethod(userClass, "isVip", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    param.setResult(true);
-                }
-            });
-
-            XposedHelpers.findAndHookMethod(userClass, "getVipType", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    param.setResult(2);
-                }
-            });
-
-            XposedHelpers.findAndHookMethod(userClass, "getVipTime", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    param.setResult(VIP_EXPIRE_FOREVER);
-                }
-            });
-
-            Log.d(TAG, "User getter Hook 完成");
+            XposedUtil.d("User getter Hook 完成");
         } catch (Throwable t) {
-            Log.e(TAG, "User getter Hook 失败: " + t);
+            XposedUtil.e("User getter Hook 失败: " + t, t);
         }
     }
 
@@ -78,26 +63,17 @@ public class YiMuBillAppHooker {
 
     private static void hookUserSetter(ClassLoader classLoader) {
         try {
-            Class<?> userClass = XposedHelpers.findClass(
-                    "com.wangc.bill.http.entity.User", classLoader);
+            Method setVipType = ReflectUtil.findMethod(USER_CLASS, classLoader, "setVipType", int.class);
+            XposedUtil.hook(setVipType, "yimubill_user_set_vip_type",
+                    chain -> chain.proceed(new Object[]{2}));
 
-            XposedHelpers.findAndHookMethod(userClass, "setVipType", int.class, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    param.args[0] = 2;
-                }
-            });
+            Method setVipTime = ReflectUtil.findMethod(USER_CLASS, classLoader, "setVipTime", long.class);
+            XposedUtil.hook(setVipTime, "yimubill_user_set_vip_time",
+                    chain -> chain.proceed(new Object[]{VIP_EXPIRE_FOREVER}));
 
-            XposedHelpers.findAndHookMethod(userClass, "setVipTime", long.class, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    param.args[0] = VIP_EXPIRE_FOREVER;
-                }
-            });
-
-            Log.d(TAG, "User setter Hook 完成");
+            XposedUtil.d("User setter Hook 完成");
         } catch (Throwable t) {
-            Log.e(TAG, "User setter Hook 失败: " + t);
+            XposedUtil.e("User setter Hook 失败: " + t, t);
         }
     }
 
@@ -109,52 +85,58 @@ public class YiMuBillAppHooker {
      */
     private static void hookMyApplication_e(ClassLoader classLoader) {
         try {
-            Class<?> myAppClass = XposedHelpers.findClass(
-                    "com.wangc.bill.application.MyApplication", classLoader);
-
-            XposedHelpers.findAndHookMethod(myAppClass, "e", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    Object user = param.getResult();
-                    if (user != null) {
-                        try {
-                            Field vipTypeField = user.getClass().getDeclaredField("vipType");
-                            vipTypeField.setAccessible(true);
-                            int oldVipType = vipTypeField.getInt(user);
-                            if (oldVipType != 2) {
-                                vipTypeField.setInt(user, 2);
-                                Log.d(TAG, "[MyApplication.e] vipType: " + oldVipType + " → 2");
-                            }
-                        } catch (NoSuchFieldException e) {
-                            for (Field f : user.getClass().getDeclaredFields()) {
-                                if (f.getType() == int.class && f.getName().contains("vip")) {
-                                    f.setAccessible(true);
-                                    int oldVal = f.getInt(user);
-                                    if (oldVal != 2) {
-                                        f.setInt(user, 2);
-                                        Log.d(TAG, "[MyApplication.e] " + f.getName() + ": " + oldVal + " → 2");
-                                    }
-                                }
-                            }
-                        }
-
-                        try {
-                            Field vipTimeField = user.getClass().getDeclaredField("vipTime");
-                            vipTimeField.setAccessible(true);
-                            long oldVipTime = vipTimeField.getLong(user);
-                            if (oldVipTime < System.currentTimeMillis()) {
-                                vipTimeField.setLong(user, VIP_EXPIRE_FOREVER);
-                                Log.d(TAG, "[MyApplication.e] vipTime: " + oldVipTime + " → " + VIP_EXPIRE_FOREVER);
-                            }
-                        } catch (NoSuchFieldException ignored) {
-                        }
-                    }
-                }
+            Method e = ReflectUtil.findMethod("com.wangc.bill.application.MyApplication", classLoader, "e");
+            XposedUtil.hook(e, "yimubill_myapplication_e", chain -> {
+                Object user = chain.proceed();
+                fixVipFields(user);
+                return user;
             });
 
-            Log.d(TAG, "MyApplication.e() Hook 完成");
+            XposedUtil.d("MyApplication.e() Hook 完成");
         } catch (Throwable t) {
-            Log.e(TAG, "MyApplication.e() Hook 失败: " + t);
+            XposedUtil.e("MyApplication.e() Hook 失败: " + t, t);
+        }
+    }
+
+    private static void fixVipFields(Object user) {
+        if (user == null) {
+            return;
+        }
+        try {
+            Field vipTypeField = ReflectUtil.findField(user.getClass(), "vipType");
+            int oldVipType = vipTypeField.getInt(user);
+            if (oldVipType != 2) {
+                vipTypeField.setInt(user, 2);
+                XposedUtil.d("[MyApplication.e] vipType: " + oldVipType + " → 2");
+            }
+        } catch (Throwable ignored) {
+            // 字段名不一致时退回“按名字猜”的兜底策略
+            for (Field field : user.getClass().getDeclaredFields()) {
+                if (field.getType() != int.class || !field.getName().contains("vip")) {
+                    continue;
+                }
+                try {
+                    field.setAccessible(true);
+                    int oldValue = field.getInt(user);
+                    if (oldValue != 2) {
+                        field.setInt(user, 2);
+                        XposedUtil.d("[MyApplication.e] " + field.getName() + ": " + oldValue + " → 2");
+                    }
+                } catch (Throwable ignoredInner) {
+                    // 忽略单个字段失败
+                }
+            }
+        }
+
+        try {
+            Field vipTimeField = ReflectUtil.findField(user.getClass(), "vipTime");
+            long oldVipTime = vipTimeField.getLong(user);
+            if (oldVipTime < System.currentTimeMillis()) {
+                vipTimeField.setLong(user, VIP_EXPIRE_FOREVER);
+                XposedUtil.d("[MyApplication.e] vipTime: " + oldVipTime + " → " + VIP_EXPIRE_FOREVER);
+            }
+        } catch (Throwable ignored) {
+            // 没有 vipTime 字段就算了
         }
     }
 
@@ -162,26 +144,14 @@ public class YiMuBillAppHooker {
 
     private static void hookUserDB(ClassLoader classLoader) {
         try {
-            Class<?> userDBClass = XposedHelpers.findClass(
-                    "com.wangc.bill.database.entity.UserDB", classLoader);
+            XposedUtil.hookReturn(ReflectUtil.findMethod(USER_DB_CLASS, classLoader, "getVipType"),
+                    "yimubill_userdb_get_vip_type", 2);
+            XposedUtil.hookReturn(ReflectUtil.findMethod(USER_DB_CLASS, classLoader, "getVipTime"),
+                    "yimubill_userdb_get_vip_time", VIP_EXPIRE_FOREVER);
 
-            XposedHelpers.findAndHookMethod(userDBClass, "getVipType", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    param.setResult(2);
-                }
-            });
-
-            XposedHelpers.findAndHookMethod(userDBClass, "getVipTime", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    param.setResult(VIP_EXPIRE_FOREVER);
-                }
-            });
-
-            Log.d(TAG, "UserDB Hook 完成");
+            XposedUtil.d("UserDB Hook 完成");
         } catch (Throwable t) {
-            Log.e(TAG, "UserDB Hook 失败: " + t);
+            XposedUtil.e("UserDB Hook 失败: " + t, t);
         }
     }
 
@@ -198,41 +168,34 @@ public class YiMuBillAppHooker {
      */
     private static void hookCheckVip(ClassLoader classLoader) {
         try {
-            Class<?> httpManagerClass = XposedHelpers.findClass(
-                    "com.wangc.bill.http.HttpManager", classLoader);
-            Class<?> myCallbackClass = XposedHelpers.findClass(
-                    "com.wangc.bill.http.httpUtils.MyCallback", classLoader);
-            Class<?> commonBaseJsonClass = XposedHelpers.findClass(
-                    "com.wangc.bill.http.protocol.CommonBaseJson", classLoader);
-            Class<?> responseClass = XposedHelpers.findClass(
-                    "retrofit2.Response", classLoader);
+            Class<?> myCallbackClass = ReflectUtil.findClass("com.wangc.bill.http.httpUtils.MyCallback", classLoader);
+            Class<?> commonBaseJsonClass = ReflectUtil.findClass("com.wangc.bill.http.protocol.CommonBaseJson", classLoader);
+            Class<?> responseClass = ReflectUtil.findClass("retrofit2.Response", classLoader);
 
-            XposedHelpers.findAndHookMethod(httpManagerClass, "checkVip",
-                    myCallbackClass, int.class, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    Log.d(TAG, "[checkVip] 拦截服务端校验，伪造成功响应");
+            Method checkVip = ReflectUtil.findMethod("com.wangc.bill.http.HttpManager", classLoader,
+                    "checkVip", myCallbackClass, int.class);
 
-                    // 构造 CommonBaseJson<Boolean>: code=0, result=true
-                    Object fakeBody = commonBaseJsonClass.newInstance();
-                    XposedHelpers.callMethod(fakeBody, "setCode", 0);
-                    XposedHelpers.callMethod(fakeBody, "setResult", Boolean.TRUE);
+            XposedUtil.hook(checkVip, "yimubill_check_vip", chain -> {
+                XposedUtil.d("[checkVip] 拦截服务端校验，伪造成功响应");
 
-                    // 构造 Response<CommonBaseJson<Boolean>> 成功响应
-                    Object fakeResponse = XposedHelpers.callStaticMethod(
-                            responseClass, "success", fakeBody);
+                // 构造 CommonBaseJson<Boolean>: code=0, result=true
+                Object fakeBody = ReflectUtil.newInstance(commonBaseJsonClass);
+                ReflectUtil.callMethod(fakeBody, "setCode", 0);
+                ReflectUtil.callMethod(fakeBody, "setResult", Boolean.TRUE);
 
-                    // 直接调用回调 onResponse, 跳过 HTTP 请求
-                    XposedHelpers.callMethod(param.args[0], "onResponse", fakeResponse);
+                // 构造 Response<CommonBaseJson<Boolean>> 成功响应
+                Object fakeResponse = ReflectUtil.callStaticMethod(responseClass, "success", fakeBody);
 
-                    // 阻止原始方法执行
-                    param.setResult(null);
-                }
+                // 直接调用回调 onResponse, 跳过 HTTP 请求
+                ReflectUtil.callMethod(chain.getArg(0), "onResponse", fakeResponse);
+
+                // 阻止原始方法执行
+                return null;
             });
 
-            Log.d(TAG, "checkVip Hook 完成");
+            XposedUtil.d("checkVip Hook 完成");
         } catch (Throwable t) {
-            Log.e(TAG, "checkVip Hook 失败: " + t);
+            XposedUtil.e("checkVip Hook 失败: " + t, t);
         }
     }
 
@@ -245,29 +208,21 @@ public class YiMuBillAppHooker {
      */
     private static void hookO4(ClassLoader classLoader) {
         try {
-            Class<?> o4Class = XposedHelpers.findClass(
-                    "com.wangc.bill.manager.o4", classLoader);
+            Class<?> activityClass = ReflectUtil.findClass("androidx.appcompat.app.AppCompatActivity", classLoader);
 
-            XposedHelpers.findAndHookMethod(o4Class, "a",
-                    "androidx.appcompat.app.AppCompatActivity",
-                    String.class, String.class, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    Log.d(TAG, "[o4.a] 拦截: " + param.args[1] + " / " + param.args[2]);
-                    param.setResult(null);
-                }
+            Method a = ReflectUtil.findMethod("com.wangc.bill.manager.o4", classLoader, "a",
+                    activityClass, String.class, String.class);
+            XposedUtil.hook(a, "yimubill_o4_a", chain -> {
+                XposedUtil.d("[o4.a] 拦截: " + chain.getArg(1) + " / " + chain.getArg(2));
+                return null;
             });
 
-            XposedHelpers.findAndHookMethod(o4Class, "b", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    param.setResult(true);
-                }
-            });
+            Method b = ReflectUtil.findMethod("com.wangc.bill.manager.o4", classLoader, "b");
+            XposedUtil.hookReturn(b, "yimubill_o4_b", true);
 
-            Log.d(TAG, "o4 Hook 完成");
+            XposedUtil.d("o4 Hook 完成");
         } catch (Throwable t) {
-            Log.e(TAG, "o4 Hook 失败: " + t);
+            XposedUtil.e("o4 Hook 失败: " + t, t);
         }
     }
 }

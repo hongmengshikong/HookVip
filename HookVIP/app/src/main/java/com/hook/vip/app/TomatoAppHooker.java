@@ -1,12 +1,17 @@
 package com.hook.vip.app;
 
-import android.util.Log;
+import com.hook.vip.util.ReflectUtil;
+import com.hook.vip.util.XposedUtil;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
+import java.lang.reflect.Method;
 
 /**
- * 针对 com.swhh.fasting.tomato 的 hook
+ * 针对 com.swhh.fasting.tomato 的 hook。
+ *
+ * 已迁移到 libxposed API 102：不再使用 XposedHelpers / XC_MethodHook，
+ * 统一走 {@code XposedUtil.hook(method, id, chain -> ...)}。
+ * 原来 "afterHookedMethod 里 setResult" 的写法，等价于
+ * {@code Object r = chain.proceed(); return 常量;}
  */
 public class TomatoAppHooker {
 
@@ -14,10 +19,11 @@ public class TomatoAppHooker {
 
     /**
      * 注册所有 hook
+     *
      * @param cl 真实的 ClassLoader
      */
     public static void hook(ClassLoader cl) {
-        Log.d("kong", "TomatoAppHooker 开始 hook 方法");
+        XposedUtil.d("TomatoAppHooker 开始 hook 方法");
 
         hookMethod(cl,
                 "com.swhh.fasting.tomato.mvvm.model.LoginResponse$UserRichBean",
@@ -30,33 +36,22 @@ public class TomatoAppHooker {
     }
 
     /**
-     * 通用 hook 方法
+     * 通用 hook 方法：先执行原方法，再把返回值替换成常量
      */
-    private static void hookMethod(ClassLoader cl, String className, String methodName, final String forceResult) {
+    private static void hookMethod(ClassLoader cl, String className, String methodName, final Object forceResult) {
         try {
-            XposedHelpers.findAndHookMethod(className, cl, methodName, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    Log.d("kong", "[HOOK] 即将调用 " + methodName + "()");
-                }
-
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    Object originalResult = param.getResult();
-                    String original = originalResult != null ? originalResult.toString() : "null";
-
-                    Log.d("kong", "[HOOK] " + methodName + "() 原始返回值: " + original);
-
-                    param.setResult(forceResult);
-
-                    Log.d("kong", "[HOOK] 已将返回值修改为: " + forceResult);
-                    Log.d("kong", "[HOOK] 修改后返回值: " + param.getResult());
-                }
+            Method method = ReflectUtil.findMethod(className, cl, methodName);
+            final Object fixed = ReflectUtil.coerce(method.getReturnType(), forceResult);
+            XposedUtil.hook(method, "tomato_" + methodName, chain -> {
+                Object originalResult = chain.proceed();
+                XposedUtil.d("[HOOK] " + methodName + "() 原始返回值: " + originalResult
+                        + " -> " + fixed);
+                return fixed;
             });
 
-            Log.d("kong", "✅ 成功注册 Hook: " + className + "." + methodName);
-        } catch (Exception e) {
-            Log.e("kong", "❌ Hook失败: " + className + "." + methodName, e);
+            XposedUtil.d("✅ 成功注册 Hook: " + className + "." + methodName);
+        } catch (Throwable t) {
+            XposedUtil.e("❌ Hook失败: " + className + "." + methodName, t);
         }
     }
 
@@ -68,30 +63,23 @@ public class TomatoAppHooker {
 
         // hook getCount() 永远返回 MAX_REMAIN_COUNT
         try {
-            XposedHelpers.findAndHookMethod(clazz, cl, "getCount", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    param.setResult(MAX_REMAIN_COUNT);
-                    Log.d("kong", "[HOOK] RemainUseTimesBean.getCount() -> " + MAX_REMAIN_COUNT);
-                }
-            });
-            Log.d("kong", "✅ Hook RemainUseTimesBean.getCount() 成功");
-        } catch (Exception e) {
-            Log.e("kong", "❌ Hook RemainUseTimesBean.getCount() 失败", e);
+            Method getCount = ReflectUtil.findMethod(clazz, cl, "getCount");
+            XposedUtil.hookReturn(getCount, "tomato_getCount", MAX_REMAIN_COUNT);
+            XposedUtil.d("✅ Hook RemainUseTimesBean.getCount() 成功");
+        } catch (Throwable t) {
+            XposedUtil.e("❌ Hook RemainUseTimesBean.getCount() 失败", t);
         }
 
-        // hook setCount(int) 不执行，保持 MAX_REMAIN_COUNT
+        // hook setCount(int) 强制写入最大值后再执行原方法
         try {
-            XposedHelpers.findAndHookMethod(clazz, cl, "setCount", int.class, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    param.args[0] = MAX_REMAIN_COUNT; // 强制写入最大值
-                    Log.d("kong", "[HOOK] RemainUseTimesBean.setCount() 强制修改为 " + MAX_REMAIN_COUNT);
-                }
+            Method setCount = ReflectUtil.findMethod(clazz, cl, "setCount", int.class);
+            XposedUtil.hook(setCount, "tomato_setCount", chain -> {
+                XposedUtil.d("[HOOK] RemainUseTimesBean.setCount() 强制修改为 " + MAX_REMAIN_COUNT);
+                return chain.proceed(new Object[]{MAX_REMAIN_COUNT});
             });
-            Log.d("kong", "✅ Hook RemainUseTimesBean.setCount() 成功");
-        } catch (Exception e) {
-            Log.e("kong", "❌ Hook RemainUseTimesBean.setCount() 失败", e);
+            XposedUtil.d("✅ Hook RemainUseTimesBean.setCount() 成功");
+        } catch (Throwable t) {
+            XposedUtil.e("❌ Hook RemainUseTimesBean.setCount() 失败", t);
         }
     }
 }
